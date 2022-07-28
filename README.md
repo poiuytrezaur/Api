@@ -1,6 +1,8 @@
 ## Project Earth Api
 *The core API for Project Earth*
 
+## **WARNING: This thing is very early work in the progress, so not everything might work as expected**
+
 ## What does this component do?
 The core API handles the bulk of game functionality - pretty much everything that isn't direct AR gameplay is done here.
 
