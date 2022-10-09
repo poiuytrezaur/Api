@@ -12,13 +12,13 @@ The core API handles the bulk of game functionality - pretty much everything tha
 | Map                        | Buildplates (because cloudburst implemetation is not complete)                                                             |
 | Tappables                  | Adventures/Encounters (because cloudburst implemetation is not complete)                                                   |
 | Crafting                   | Smelting (kinda works, but it is a bit broken, because its implementation is not complete or lacks some necessary details) |
-| Store                      | Buildplate sharing (right now it lacks the website part where you could launch the game and play it)                       |
+| Store                      | Buildplate sharing (right now it lacks the website part where you could launch the game in order to play it)               |
 | Inventory                  | Challenges (not all of the chalende conditions are implemented and some of them is broken)                                 |
 | Boosts                     | Profile (activity log is not implemented)                                                                                  |
 | Journal                    |                                                                                                                            |
 
 ## Building
-1. `git clone https://github.com/jackcaver/Api.git`
+1. `git clone --recursive https://github.com/jackcaver/Api.git`
 2. `cd Api`
 3. `dotnet build` or use any IDE that you want and build it there
 
@@ -45,7 +45,7 @@ On the cloudburst side:
 - on the Api side, go to `data/config/apiconfig.json`, and add the following:
 ```json
 "multiplayerAuthKeys": {
-        "Your cloudburst server IP here": "the same key you put in key.txt earlier"
+        "The same IP you put in ip.txt": "the same key you put in key.txt earlier"
  }
 ```
 - Start up the Api
