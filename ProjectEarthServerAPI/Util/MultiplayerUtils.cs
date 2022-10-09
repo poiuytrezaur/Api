@@ -34,12 +34,21 @@ namespace ProjectEarthServerAPI.Util
 			string buildplateId,
 			Coordinate playerCoords)
 		{
+
+			Log.Information($"[{playerId}]: Creating new buildplate instance: Buildplate {buildplateId}");
+
+			Random rdm = new Random();
+			var serverRoleInstanceBytes = new byte[6];
+			rdm.NextBytes(serverRoleInstanceBytes);
+
+			//var serverRoleInstance = BitConverter.ToString(serverRoleInstanceBytes);
+			var serverRoleInstance = "776932eeeb69";
+			var serverPlayerJoinCode = Convert.ToBase64String(serverRoleInstanceBytes);
+
 			var server = ServerInfoList.First();
 			var serverIp = server.Value.ip;
 			var serverPort = server.Value.port;
 			var serverInstanceId = await NotifyServerInstance(server.Key, buildplateId, playerId);
-
-			Log.Information($"[{playerId}]: Creating new buildplate instance: Buildplate {buildplateId}");
 
 			var buildplate = BuildplateUtils.ReadBuildplate(Guid.Parse(buildplateId));
 			var blocksPerMeter = buildplate.blocksPerMeter;
@@ -57,11 +66,15 @@ namespace ProjectEarthServerAPI.Util
 				breakableItemToItemLootMap = new BuildplateServerResponse.BreakableItemToItemLootMap(),
 				dimension = dimensions,
 				gameplayMode = GameplayMode.Buildplate,
-				isFullSize = (dimensions.x >= 32 && dimensions.z >= 32),
+				isFullSize =
+					false, // TODO: Defines if the buildplate should be rendered, we just disable it (Actual Check: (dimensions.x >= 32 && dimensions.z >= 32))
 				offset = buildplateOffset, // Same for all buildplates
-				playerJoinCode = "AAALbMlbaG57sSuQMe0Yek2w", // 24 letters/Numbers, probably randomly generated
+				playerJoinCode = serverPlayerJoinCode, // 24 letters/Numbers, probably randomly generated
 				rarity = null, // Why even is this here?
-				shutdownBehavior = new List<string>() {"ServerShutdownWhenAllPlayersQuit", "ServerShutdownWhenHostPlayerQuits"}, // Own instance server needs to respect this
+				shutdownBehavior = new List<string>()
+				{
+					"ServerShutdownWhenAllPlayersQuit", "ServerShutdownWhenHostPlayerQuits"
+				}, // Own instance server needs to respect this
 				snapshotOptions = new BuildplateServerResponse.SnapshotOptions
 				{
 					saveState = new BuildplateServerResponse.SaveState // Should be the same for all buildplates
@@ -95,7 +108,7 @@ namespace ProjectEarthServerAPI.Util
 					metadata = JsonConvert.SerializeObject(instanceMetadata),
 					partitionId = playerId,
 					port = serverPort,
-					roleInstance = "776932eeeb69",
+					roleInstance = serverRoleInstance,
 					serverReady = false,
 					serverStatus = "Running"
 				},
@@ -138,7 +151,13 @@ namespace ProjectEarthServerAPI.Util
 				InstanceList[instanceId].result.serverReady = true;
 				return InstanceList[instanceId];
 			}
-			else return null;
+			else return InstanceList[instanceId];
+		}
+
+		public static BuildplateServerResponse GetServerInstance(string joinCode)
+		{
+			var instance = InstanceList.FirstOrDefault(match => match.Value.result.gameplayMetadata.playerJoinCode == joinCode).Value;
+			return instance;
 		}
 
 		private static HotbarTranslation[] EditHotbarForPlayer(string playerId, MultiplayerItem[] multiplayerHotbar)
@@ -156,11 +175,19 @@ namespace ProjectEarthServerAPI.Util
 				{
 					tempArr[i] ??= new MultiplayerItem
 					{
-						category = new MultiplayerItemCategory {loc = ItemCategory.Invalid, value = (int)ItemCategory.Invalid},
+						category = new MultiplayerItemCategory
+						{
+							loc = ItemCategory.Invalid,
+							value = (int)ItemCategory.Invalid
+						},
 						count = 0,
 						guid = Guid.Empty,
 						owned = true,
-						rarity = new MultiplayerItemRarity {loc = ItemRarity.Invalid, value = (int)ItemRarity.Invalid}
+						rarity = new MultiplayerItemRarity
+						{
+							loc = ItemRarity.Invalid,
+							value = (int)ItemRarity.Invalid
+						}
 					};
 				}
 
@@ -177,14 +204,45 @@ namespace ProjectEarthServerAPI.Util
 				if (item.guid != Guid.Empty)
 				{
 					var catalogItem = StateSingleton.Instance.catalog.result.items.Find(match => match.id == item.guid);
-					hotbar[i] = new InventoryResponse.Hotbar {count = item.count, id = item.guid, instanceId = item.instance_data.id};
+					if (item.instance_data != null)
+					{
+						hotbar[i] = new InventoryResponse.Hotbar
+						{
+							count = 1,
+							id = item.guid,
+							instanceId = item.instance_data.id,
+							health = item.instance_data.health
+						};
+					}
+					else
+					{
+						hotbar[i] = new InventoryResponse.Hotbar
+						{
+							count = item.count,
+							id = item.guid,
+							instanceId = null,
+							health = null
+						};
+					}
 
-					response[i] = new HotbarTranslation {count = item.count, identifier = catalogItem.item.name, meta = catalogItem.item.aux, slotId = i};
+					response[i] = new HotbarTranslation
+					{
+						count = item.count,
+						identifier = catalogItem.item.name,
+						meta = catalogItem.item.aux,
+						slotId = i
+					};
 				}
 				else
 				{
 					hotbar[i] = null;
-					response[i] = new HotbarTranslation {count = 0, identifier = "air", meta = 0, slotId = i};
+					response[i] = new HotbarTranslation
+					{
+						count = 0,
+						identifier = "air",
+						meta = 0,
+						slotId = i
+					};
 				}
 			}
 
@@ -238,8 +296,7 @@ namespace ProjectEarthServerAPI.Util
 					slot.count = request.count + 1;
 					slot.id = catalogItem.id;
 
-					//if (isNonStackableItem)
-					//InventoryUtils.EditInstance(playerId, slot.instanceId.Value, request.health); TODO:
+					if (isNonStackableItem) slot.health = request.health;
 				}
 
 				hotbar[request.slotIndex] = slot;
@@ -250,10 +307,9 @@ namespace ProjectEarthServerAPI.Util
 				// Removing items from the normal inventory should never be possible, except from the hotbar
 				//if (request.removeItem) InventoryUtils.RemoveItemFromInv(playerId, catalogItem.id, request.count, request.health);
 				//else 
-				InventoryUtils.AddItemToInv(playerId, catalogItem.id, request.count, !isNonStackableItem);
+				InventoryUtils.AddItemToInv(playerId, catalogItem.id, request.count);
 			}
 		}
-
 		public static string ExecuteServerCommand(ServerCommandRequest request)
 		{
 			var command = request.command;

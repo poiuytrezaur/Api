@@ -12,7 +12,7 @@
 	{
 		public bool workshop_enabled { get; set; } = true;
 		public bool buildplates_enabled { get; set; } = true;
-		public bool enable_ruby_purchasing { get; set; }
+		public bool enable_ruby_purchasing { get; set; } = false;
 		public bool commerce_enabled { get; set; } = true;
 		public bool full_logging_enabled { get; set; } = true;
 		public bool challenges_enabled { get; set; } = true;

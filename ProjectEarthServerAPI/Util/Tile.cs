@@ -19,8 +19,8 @@ namespace ProjectEarthServerAPI.Util
 			try
 			{
 				Directory.CreateDirectory(Path.Combine(basePath, pos1.ToString()));
-				string downloadUrl = "https://cdn.mceserv.net/tile/16/" + pos1 + "/" + pos1 + "_" + pos2 + "_16.png";
-				//string downloadUrl = "https://tiles.projectearth.dev/styles/mc-earth/16/" + pos1 + "/" + pos2 + ".png"; // Disabled until aliasing issues are fixed
+				//string downloadUrl = "https://cdn.mceserv.net/tile/16/" + pos1 + "/" + pos1 + "_" + pos2 + "_16.png";// Disabled because the server is down 
+				string downloadUrl = StateSingleton.Instance.config.tileServerUrl + "/styles/mc-earth/16/" + pos1 + "/" + pos2 + ".png"; 
 				webClient.DownloadFile(downloadUrl, Path.Combine(basePath, pos1.ToString(), $"{pos1}_{pos2}_16.png"));
 				webClient.Dispose();
 				return true;
@@ -35,7 +35,7 @@ namespace ProjectEarthServerAPI.Util
 
 		//From https://wiki.openstreetmap.org/wiki/Slippy_map_tilenames with slight changes
 
-		public static int[] getTileForCords(double lat, double lon)
+		public static string getTileForCoordinates(double lat, double lon)
 		{
 			//Adapted from java example. Zoom is replaced by the constant 16 because all MCE tiles are at zoom 16
 
@@ -51,7 +51,7 @@ namespace ProjectEarthServerAPI.Util
 			if (ytile >= (1 << 16))
 				ytile = ((1 << 16) - 1);
 
-			return new int[] {xtile, ytile};
+			return $"{xtile}_{ytile}";
 		}
 
 		//Helper
