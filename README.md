@@ -13,7 +13,7 @@ The core API handles the bulk of game functionality - pretty much everything tha
 | Tappables                  | Adventures/Encounters (because cloudburst implemetation is not complete)                                                   |
 | Crafting                   | Smelting (kinda works, but it is a bit broken, because its implementation is not complete or lacks some necessary details) |
 | Store                      | Buildplate sharing (right now it lacks the website part where you could launch the game in order to play it)               |
-| Inventory                  | Challenges (not all of the chalende conditions are implemented and some of them is broken)                                 |
+| Inventory                  | Challenges (not all of the challenge conditions are implemented and some of them is broken)                                |
 | Boosts                     | Profile (activity log is not implemented)                                                                                  |
 | Journal                    |                                                                                                                            |
 
