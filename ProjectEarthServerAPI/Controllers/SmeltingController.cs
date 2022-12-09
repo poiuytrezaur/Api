@@ -1,6 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -9,7 +8,7 @@ using ProjectEarthServerAPI.Util;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using ProjectEarthServerAPI.Models;
-using Serilog;
+using ProjectEarthServerAPI.Models.Player;
 
 namespace ProjectEarthServerAPI.Controllers
 {
@@ -53,9 +52,14 @@ namespace ProjectEarthServerAPI.Controllers
 
 		[ApiVersion("1.1")]
 		[Route("1/api/v{version:apiVersion}/smelting/{slot}/finish")]
-		public IActionResult PostCraftingFinish(int slot)
+		public async Task<IActionResult> PostSmeltingFinish(int slot)
 		{
-			var result = SmeltingUtils.FinishCraftingJobNow(User.FindFirstValue(ClaimTypes.NameIdentifier), slot);
+			var stream = new StreamReader(Request.Body);
+			var body = await stream.ReadToEndAsync();
+
+			var req = JsonConvert.DeserializeObject<FinishCraftingJobRequest>(body);
+
+			var result = SmeltingUtils.FinishSmeltingJobNow(User.FindFirstValue(ClaimTypes.NameIdentifier), slot, req.expectedPurchasePrice);
 			return Content(JsonConvert.SerializeObject(result), "application/json");
 		}
 

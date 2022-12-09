@@ -1,9 +1,6 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using ProjectEarthServerAPI.Models;
-using ProjectEarthServerAPI.Util;
 using ProjectEarthServerAPI.Models.Features;
 using ProjectEarthServerAPI.Models.Player;
 
@@ -44,5 +41,7 @@ namespace ProjectEarthServerAPI.Util
 		/// A reference of guid <-> id, so that we can keep track of a tappable from spawn to redeem
 		/// </summary>
 		public Dictionary<Guid, LocationResponse.ActiveLocationStorage> activeTappables { get; set; }
+		public Dictionary<string, ProfileLevel> levels { get; set; }
+		public Dictionary<Guid, StoreItemInfo> shopItems { get; set; }
 	}
 }

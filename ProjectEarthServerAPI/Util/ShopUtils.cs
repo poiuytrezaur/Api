@@ -19,8 +19,7 @@ namespace ProjectEarthServerAPI.Util
 
         public static void processPurchase(string playerId, PurchaseItemRequest request) {
             try {
-                var shopItems = readShopItemDictionary();
-                var itemToPurchase = shopItems[request.itemId];
+                var itemToPurchase = StateSingleton.Instance.shopItems[request.itemId];
                 if (itemToPurchase.storeItemType == StoreItemType.Items) {
                     foreach (var item in itemToPurchase.inventoryCounts) {
                         InventoryUtils.AddItemToInv(playerId, item.Key, item.Value);
@@ -48,11 +47,10 @@ namespace ProjectEarthServerAPI.Util
 
         public static StoreItemInfoResponse getStoreItemInfo(List<StoreItemInfo> request) {
             var result = new List<StoreItemInfo>();
-            var shopItems = readShopItemDictionary();
             for (int i = 0; i < request.Count; i++) {
                 if (request[i].storeItemType == StoreItemType.Buildplates) {
                     var buildplate = BuildplateUtils.ReadBuildplate(request[i].id);
-                    var itemFromMap = shopItems.FirstOrDefault(match => match.Value.id == request[i].id).Value;
+                    var itemFromMap = StateSingleton.Instance.shopItems.FirstOrDefault(match => match.Value.id == request[i].id).Value;
                     if (buildplate != null) {
                         result.Add(new StoreItemInfo() {
                             id = request[i].id,

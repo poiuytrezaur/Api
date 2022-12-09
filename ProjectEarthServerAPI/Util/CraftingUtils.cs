@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Newtonsoft.Json.Linq;
 using ProjectEarthServerAPI.Models;
 using ProjectEarthServerAPI.Models.Features;
 using Serilog;
@@ -141,7 +140,7 @@ namespace ProjectEarthServerAPI.Util
 
 		}
 
-		public static SplitRubyResponse FinishCraftingJobNow(string playerId, int slot)
+		public static SplitRubyResponse FinishCraftingJobNow(string playerId, int slot, int price)
 		{
 			var job = craftingJobs[playerId][slot];
 
@@ -153,6 +152,7 @@ namespace ProjectEarthServerAPI.Util
 			job.escrow = new InputItem[0];
 
 			UtilityBlockUtils.UpdateUtilityBlocks(playerId, slot, job);
+			RubyUtils.RemoveRubiesFromPlayer(playerId, price);
 
 			return RubyUtils.ReadRubies(playerId);
 		}

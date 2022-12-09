@@ -14,6 +14,7 @@ namespace ProjectEarthServerAPI.Util
     {
         //Properties
         public string baseServerIP { get; set; }
+		public bool useBaseServerIP { get; set; }
         public string tileServerUrl { get; set; }
         public string playfabTitleId { get; set; }
         public string itemsFolderLocation { get; set; }
@@ -25,9 +26,10 @@ namespace ProjectEarthServerAPI.Util
 		public Guid activeSeasonChallenge { get; set; }
         public string buildplateStorageFolderLocation { get; set; }
         public string sharedBuildplateStorageFolderLocation { get; set; }
-        public string productCatalogFileLocation { get; set; }
+		public string productCatalogFileLocation { get; set; }
         public string ShopItemDictionaryFileLocation { get; set; }
-        public string EncounterLocationsFileLocation { get; set; }
+		public string LevelDictionaryFileLocation { get; set; }
+		public string EncounterLocationsFileLocation { get; set; }
         public Dictionary<string, string> multiplayerAuthKeys { get; set; }
         //tappable settings
         public int minTappableSpawnAmount { get; set; }

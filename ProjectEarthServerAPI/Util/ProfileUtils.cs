@@ -1,5 +1,7 @@
-﻿using System.Dynamic;
+﻿using System.Collections.Generic;
+using Newtonsoft.Json;
 using ProjectEarthServerAPI.Models;
+using System.IO;
 
 namespace ProjectEarthServerAPI.Util
 {
@@ -32,6 +34,13 @@ namespace ProjectEarthServerAPI.Util
 		private static bool WriteProfile(string playerId, ProfileData playerProfile)
 		{
 			return GenericUtils.WriteJsonFile(playerId, playerProfile, "profile");
+		}
+
+		public static Dictionary<string, ProfileLevel> readLevelDictionary()
+		{
+			var filepath = StateSingleton.Instance.config.LevelDictionaryFileLocation;
+			var levelsJson = File.ReadAllText(filepath);
+			return JsonConvert.DeserializeObject<Dictionary<string, ProfileLevel>>(levelsJson);
 		}
 	}
 }

@@ -1,12 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Newtonsoft.Json;
 using ProjectEarthServerAPI.Models;
 using ProjectEarthServerAPI.Util;
+using Serilog;
 
 namespace ProjectEarthServerAPI.Controllers
 {
@@ -26,7 +24,9 @@ namespace ProjectEarthServerAPI.Controllers
 		[HttpGet]
 		public ContentResult Get()
 		{
-			string baseServerIP = StateSingleton.Instance.config.baseServerIP;
+			string protocol = Request.IsHttps ? "https://" : "http://";
+			string baseServerIP = StateSingleton.Instance.config.useBaseServerIP ? StateSingleton.Instance.config.baseServerIP : $"{protocol}{Request.Host.Value}";
+			Log.Information($"{HttpContext.Connection.RemoteIpAddress} has issued locator, replying with {baseServerIP}");
 
 			LocatorResponse.Root response = new LocatorResponse.Root()
 			{
@@ -72,7 +72,9 @@ namespace ProjectEarthServerAPI.Controllers
 		[HttpGet]
 		public ContentResult Get()
 		{
-			string baseServerIP = StateSingleton.Instance.config.baseServerIP;
+			string protocol = Request.IsHttps ? "https://" : "http://";
+			string baseServerIP = StateSingleton.Instance.config.useBaseServerIP ? StateSingleton.Instance.config.baseServerIP : $"{protocol}{Request.Host.Value}";
+			Log.Information($"{HttpContext.Connection.RemoteIpAddress} has issued locator, replying with {baseServerIP}");
 
 			LocatorResponse.Root response = new LocatorResponse.Root()
 			{

@@ -1,24 +1,17 @@
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
-using System.Threading.Tasks;
 using ProjectEarthServerAPI.Models;
 using ProjectEarthServerAPI.Util;
 using ProjectEarthServerAPI.Models.Features;
 using ProjectEarthServerAPI.Models.Player;
 using Serilog;
-using Serilog.Core;
 using Uma.Uuid;
 
 namespace ProjectEarthServerAPI
 {
 
-    public class Program
+	public class Program
     {
 
         public static void Main(string[] args)
@@ -43,6 +36,8 @@ namespace ProjectEarthServerAPI
             StateSingleton.Instance.productCatalog = ProductCatalogResponse.FromFile(StateSingleton.Instance.config.productCatalogFileLocation);
             StateSingleton.Instance.tappableData = TappableUtils.loadAllTappableSets();
             StateSingleton.Instance.activeTappables = new();
+			StateSingleton.Instance.levels = ProfileUtils.readLevelDictionary();
+			StateSingleton.Instance.shopItems = ShopUtils.readShopItemDictionary();
             //Start api
             CreateHostBuilder(args).Build().Run();
 

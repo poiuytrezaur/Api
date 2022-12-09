@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Security.Claims;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
@@ -44,7 +43,7 @@ namespace ProjectEarthServerAPI.Controllers
 			var body = await stream.ReadToEndAsync();
 			var parsedRequest = JsonConvert.DeserializeObject<BuildplateServerRequest>(body);
 
-			var response = await MultiplayerUtils.CreateBuildplateInstance(authtoken, buildplateId, parsedRequest.playerCoordinate);
+			var response = await MultiplayerUtils.CreateBuildplatePlayInstance(authtoken, buildplateId, parsedRequest.playerCoordinate);
 			return Content(JsonConvert.SerializeObject(response), "application/json");
 		}
 
@@ -89,7 +88,7 @@ namespace ProjectEarthServerAPI.Controllers
 			var body = await stream.ReadToEndAsync();
 			var parsedRequest = JsonConvert.DeserializeObject<SharedBuildplateServerRequest>(body);
 			
-			var response = await MultiplayerUtils.CreateBuildplateInstance(authtoken, buildplateId, parsedRequest.playerCoordinate);
+			var response = await MultiplayerUtils.CreateSharedBuildplatePlayInstance(authtoken, buildplateId, parsedRequest.playerCoordinate);
 			return Content(JsonConvert.SerializeObject(response), "application/json");
 		}
 
@@ -120,7 +119,7 @@ namespace ProjectEarthServerAPI.Controllers
 			var body = await stream.ReadToEndAsync();
 			var parsedRequest = JsonConvert.DeserializeObject<EncounterServerRequest>(body);
 
-			var response = await MultiplayerUtils.CreateBuildplateInstance(authtoken, adventureid, parsedRequest.playerCoordinate);
+			var response = await MultiplayerUtils.CreateAdventureInstance(authtoken, adventureid, parsedRequest.playerCoordinate);
 			return Content(JsonConvert.SerializeObject(response), "application/json");
 		}
 
@@ -134,7 +133,7 @@ namespace ProjectEarthServerAPI.Controllers
 			var body = await stream.ReadToEndAsync();
 			var parsedRequest = JsonConvert.DeserializeObject<BuildplateServerRequest>(body);
 
-			var response = await MultiplayerUtils.CreateBuildplateInstance(authtoken, adventureid, parsedRequest.playerCoordinate);
+			var response = await MultiplayerUtils.CreateAdventureInstance(authtoken, adventureid, parsedRequest.playerCoordinate);
 			return Content(JsonConvert.SerializeObject(response), "application/json");
 		}
 

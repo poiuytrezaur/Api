@@ -1,24 +1,17 @@
 ﻿using System;
-using System.Buffers.Text;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
-using System.Net;
 using System.Net.WebSockets;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using System.Xml.Linq;
-using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using ProjectEarthServerAPI.Models;
 using ProjectEarthServerAPI.Models.Buildplate;
-using ProjectEarthServerAPI.Models.Features;
 using ProjectEarthServerAPI.Models.Multiplayer;
 using ProjectEarthServerAPI.Models.Player;
 using Serilog;
-using Uma.Uuid;
 
 namespace ProjectEarthServerAPI.Util
 {
@@ -84,6 +77,300 @@ namespace ProjectEarthServerAPI.Util
 					snapshotTriggerConditions = "None",
 					snapshotWorldStorage = "Buildplate",
 					triggerConditions = new List<string>() {"Interval", "PlayerExits"},
+					triggerInterval = new TimeSpan(00, 00, 30)
+				},
+				spawningClientBuildNumber =
+					"2020.1217.02", // How should we figure this out? Should probably just be the latest every time
+				spawningPlayerId = playerId,
+				surfaceOrientation = surfaceOrientation,
+				templateId = templateId,
+				worldId = buildplateId
+			};
+
+			var result = new BuildplateServerResponse
+			{
+				result = new BuildplateServerResponse.Result
+				{
+					applicationStatus = "Unknown",
+					//fqdn = "dns2527870c-89c6-420e-8378-996a2c40304a-azurebatch-cloudservice.westeurope.cloudapp.azure.com", // figure out why this breaks everything
+					fqdn = "d.projectearth.dev",
+					gameplayMetadata = buildplateData,
+					hostCoordinate = playerCoords,
+					instanceId = serverInstanceId.ToString(),
+					ipV4Address = serverIp,
+					metadata = JsonConvert.SerializeObject(instanceMetadata),
+					partitionId = playerId,
+					port = serverPort,
+					roleInstance = serverRoleInstance,
+					serverReady = false,
+					serverStatus = "Running"
+				},
+				updates = new Updates()
+			};
+
+			if (InstanceReadyList[serverInstanceId])
+			{
+				result.result.applicationStatus = "Ready";
+				result.result.serverReady = true;
+			}
+
+			InstanceList.Add(serverInstanceId, result);
+
+			return result;
+		}
+
+		public static async Task<BuildplateServerResponse> CreateBuildplatePlayInstance(string playerId,
+			string buildplateId,
+			Coordinate playerCoords)
+		{
+
+			Log.Information($"[{playerId}]: Creating new buildplate play instance: Buildplate {buildplateId}");
+
+			Random rdm = new Random();
+			var serverRoleInstanceBytes = new byte[6];
+			rdm.NextBytes(serverRoleInstanceBytes);
+
+			//var serverRoleInstance = BitConverter.ToString(serverRoleInstanceBytes);
+			var serverRoleInstance = "776932eeeb69";
+			var serverPlayerJoinCode = Convert.ToBase64String(serverRoleInstanceBytes);
+
+			var server = ServerInfoList.First();
+			var serverIp = server.Value.ip;
+			var serverPort = server.Value.port;
+			var serverInstanceId = await NotifyServerInstance(server.Key, buildplateId, playerId);
+
+			var buildplate = BuildplateUtils.ReadBuildplate(Guid.Parse(buildplateId));
+			var blocksPerMeter = buildplate.blocksPerMeter;
+			var buildplateOffset = buildplate.offset;
+			var instanceMetadata = new BuildplateServerResponse.InstanceMetadata { buildplateid = buildplateId };
+
+			var dimensions = buildplate.dimension;
+			var templateId = buildplate.templateId; // Not used AFAIK
+			var surfaceOrientation = buildplate.surfaceOrientation; // Can also be vertical
+
+			var buildplateData = new BuildplateServerResponse.GameplayMetadata
+			{
+				augmentedImageSetId = null,
+				blocksPerMeter = blocksPerMeter,
+				breakableItemToItemLootMap = new BuildplateServerResponse.BreakableItemToItemLootMap(),
+				dimension = dimensions,
+				gameplayMode = GameplayMode.Buildplate,
+				isFullSize =
+					false, // TODO: Defines if the buildplate should be rendered, we just disable it (Actual Check: (dimensions.x >= 32 && dimensions.z >= 32))
+				offset = buildplateOffset, // Same for all buildplates
+				playerJoinCode = serverPlayerJoinCode, // 24 letters/Numbers, probably randomly generated
+				rarity = null, // Why even is this here?
+				shutdownBehavior = new List<string>()
+				{
+					"ServerShutdownWhenAllPlayersQuit", "ServerShutdownWhenHostPlayerQuits"
+				}, // Own instance server needs to respect this
+				snapshotOptions = new BuildplateServerResponse.SnapshotOptions
+				{
+					saveState = new BuildplateServerResponse.SaveState // Should be the same for all buildplates
+					{
+						inventory = true,
+						model = true,
+						world = true
+					},
+					snapshotTriggerConditions = "None",
+					snapshotWorldStorage = "Buildplate",
+					triggerConditions = new List<string>() { "Interval", "PlayerExits" },
+					triggerInterval = new TimeSpan(00, 00, 30)
+				},
+				spawningClientBuildNumber =
+					"2020.1217.02", // How should we figure this out? Should probably just be the latest every time
+				spawningPlayerId = playerId,
+				surfaceOrientation = surfaceOrientation,
+				templateId = templateId,
+				worldId = buildplateId
+			};
+
+			var result = new BuildplateServerResponse
+			{
+				result = new BuildplateServerResponse.Result
+				{
+					applicationStatus = "Unknown",
+					//fqdn = "dns2527870c-89c6-420e-8378-996a2c40304a-azurebatch-cloudservice.westeurope.cloudapp.azure.com", // figure out why this breaks everything
+					fqdn = "d.projectearth.dev",
+					gameplayMetadata = buildplateData,
+					hostCoordinate = playerCoords,
+					instanceId = serverInstanceId.ToString(),
+					ipV4Address = serverIp,
+					metadata = JsonConvert.SerializeObject(instanceMetadata),
+					partitionId = playerId,
+					port = serverPort,
+					roleInstance = serverRoleInstance,
+					serverReady = false,
+					serverStatus = "Running"
+				},
+				updates = new Updates()
+			};
+
+			if (InstanceReadyList[serverInstanceId])
+			{
+				result.result.applicationStatus = "Ready";
+				result.result.serverReady = true;
+			}
+
+			InstanceList.Add(serverInstanceId, result);
+
+			return result;
+		}
+
+		public static async Task<BuildplateServerResponse> CreateSharedBuildplatePlayInstance(string playerId,
+			string buildplateId,
+			Coordinate playerCoords)
+		{
+
+			Log.Information($"[{playerId}]: Creating new shared buildplate play instance: Buildplate {buildplateId}");
+
+			Random rdm = new Random();
+			var serverRoleInstanceBytes = new byte[6];
+			rdm.NextBytes(serverRoleInstanceBytes);
+
+			//var serverRoleInstance = BitConverter.ToString(serverRoleInstanceBytes);
+			var serverRoleInstance = "776932eeeb69";
+			var serverPlayerJoinCode = Convert.ToBase64String(serverRoleInstanceBytes);
+
+			var server = ServerInfoList.First();
+			var serverIp = server.Value.ip;
+			var serverPort = server.Value.port;
+			var serverInstanceId = await NotifyServerInstance(server.Key, buildplateId, playerId);
+
+			var buildplate = BuildplateUtils.ReadSharedBuildplate(buildplateId);
+			var blocksPerMeter = buildplate.result.buildplateData.blocksPerMeter;
+			var buildplateOffset = buildplate.result.buildplateData.offset;
+			var instanceMetadata = new BuildplateServerResponse.InstanceMetadata { buildplateid = buildplateId };
+
+			var dimensions = buildplate.result.buildplateData.dimension;
+			var templateId = Guid.Empty; // Not used AFAIK
+			var surfaceOrientation = buildplate.result.buildplateData.surfaceOrientation; // Can also be vertical
+
+			var buildplateData = new BuildplateServerResponse.GameplayMetadata
+			{
+				augmentedImageSetId = null,
+				blocksPerMeter = blocksPerMeter,
+				breakableItemToItemLootMap = new BuildplateServerResponse.BreakableItemToItemLootMap(),
+				dimension = dimensions,
+				gameplayMode = GameplayMode.Buildplate,
+				isFullSize =
+					false, // TODO: Defines if the buildplate should be rendered, we just disable it (Actual Check: (dimensions.x >= 32 && dimensions.z >= 32))
+				offset = buildplateOffset, // Same for all buildplates
+				playerJoinCode = serverPlayerJoinCode, // 24 letters/Numbers, probably randomly generated
+				rarity = null, // Why even is this here?
+				shutdownBehavior = new List<string>()
+				{
+					"ServerShutdownWhenAllPlayersQuit", "ServerShutdownWhenHostPlayerQuits"
+				}, // Own instance server needs to respect this
+				snapshotOptions = new BuildplateServerResponse.SnapshotOptions
+				{
+					saveState = new BuildplateServerResponse.SaveState // Should be the same for all buildplates
+					{
+						inventory = true,
+						model = true,
+						world = true
+					},
+					snapshotTriggerConditions = "None",
+					snapshotWorldStorage = "Buildplate",
+					triggerConditions = new List<string>() { "Interval", "PlayerExits" },
+					triggerInterval = new TimeSpan(00, 00, 30)
+				},
+				spawningClientBuildNumber =
+					"2020.1217.02", // How should we figure this out? Should probably just be the latest every time
+				spawningPlayerId = playerId,
+				surfaceOrientation = surfaceOrientation,
+				templateId = templateId,
+				worldId = buildplateId
+			};
+
+			var result = new BuildplateServerResponse
+			{
+				result = new BuildplateServerResponse.Result
+				{
+					applicationStatus = "Unknown",
+					//fqdn = "dns2527870c-89c6-420e-8378-996a2c40304a-azurebatch-cloudservice.westeurope.cloudapp.azure.com", // figure out why this breaks everything
+					fqdn = "d.projectearth.dev",
+					gameplayMetadata = buildplateData,
+					hostCoordinate = playerCoords,
+					instanceId = serverInstanceId.ToString(),
+					ipV4Address = serverIp,
+					metadata = JsonConvert.SerializeObject(instanceMetadata),
+					partitionId = playerId,
+					port = serverPort,
+					roleInstance = serverRoleInstance,
+					serverReady = false,
+					serverStatus = "Running"
+				},
+				updates = new Updates()
+			};
+
+			if (InstanceReadyList[serverInstanceId])
+			{
+				result.result.applicationStatus = "Ready";
+				result.result.serverReady = true;
+			}
+
+			InstanceList.Add(serverInstanceId, result);
+
+			return result;
+		}
+
+		public static async Task<BuildplateServerResponse> CreateAdventureInstance(string playerId,
+			string buildplateId,
+			Coordinate playerCoords)
+		{
+
+			Log.Information($"[{playerId}]: Creating new adventure instance: Adventure {buildplateId}");
+
+			Random rdm = new Random();
+			var serverRoleInstanceBytes = new byte[6];
+			rdm.NextBytes(serverRoleInstanceBytes);
+
+			//var serverRoleInstance = BitConverter.ToString(serverRoleInstanceBytes);
+			var serverRoleInstance = "776932eeeb69";
+			var serverPlayerJoinCode = Convert.ToBase64String(serverRoleInstanceBytes);
+
+			var server = ServerInfoList.First();
+			var serverIp = server.Value.ip;
+			var serverPort = server.Value.port;
+			var serverInstanceId = await NotifyServerInstance(server.Key, buildplateId, playerId);
+
+			var buildplate = BuildplateUtils.ReadBuildplate(Guid.Parse(buildplateId));
+			var blocksPerMeter = buildplate.blocksPerMeter;
+			var buildplateOffset = buildplate.offset;
+			var instanceMetadata = new BuildplateServerResponse.InstanceMetadata { buildplateid = buildplateId };
+
+			var dimensions = buildplate.dimension;
+			var templateId = buildplate.templateId; // Not used AFAIK
+			var surfaceOrientation = buildplate.surfaceOrientation; // Can also be vertical
+
+			var buildplateData = new BuildplateServerResponse.GameplayMetadata
+			{
+				augmentedImageSetId = null,
+				blocksPerMeter = blocksPerMeter,
+				breakableItemToItemLootMap = new BuildplateServerResponse.BreakableItemToItemLootMap(),
+				dimension = dimensions,
+				gameplayMode = GameplayMode.Encounter,
+				isFullSize =
+					false, // TODO: Defines if the buildplate should be rendered, we just disable it (Actual Check: (dimensions.x >= 32 && dimensions.z >= 32))
+				offset = buildplateOffset, // Same for all buildplates
+				playerJoinCode = serverPlayerJoinCode, // 24 letters/Numbers, probably randomly generated
+				rarity = null, // Why even is this here?
+				shutdownBehavior = new List<string>()
+				{
+					"ServerShutdownWhenAllPlayersQuit", "ServerShutdownWhenHostPlayerQuits"
+				}, // Own instance server needs to respect this
+				snapshotOptions = new BuildplateServerResponse.SnapshotOptions
+				{
+					saveState = new BuildplateServerResponse.SaveState // Should be the same for all buildplates
+					{
+						inventory = true,
+						model = true,
+						world = true
+					},
+					snapshotTriggerConditions = "None",
+					snapshotWorldStorage = "Encounter",
+					triggerConditions = new List<string>() { "Interval", "PlayerExits" },
 					triggerInterval = new TimeSpan(00, 00, 30)
 				},
 				spawningClientBuildNumber =
