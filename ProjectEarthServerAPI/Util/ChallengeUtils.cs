@@ -4,6 +4,7 @@ using System.Globalization;
 using System.Linq;
 using Microsoft.OpenApi.Extensions;
 using ProjectEarthServerAPI.Models;
+using ProjectEarthServerAPI.Models.Features;
 using ProjectEarthServerAPI.Models.Player;
 using Serilog;
 
@@ -68,6 +69,9 @@ namespace ProjectEarthServerAPI.Util
 			playerChallenges.result.challenges[challengeId].percentComplete = 100;
 
 			WriteChallenges(playerId, playerChallenges);
+
+			JournalUtils.AddActivityLogEntry(playerId, DateTime.UtcNow, Scenario.ChallengeCompleted, challenge.rewards,
+				challenge.duration, null, null, challengeId, (uint)challenge.order, null);
 
 			var completionToken = new Token {clientProperties = new Dictionary<string, string>(), clientType = "challenge.completed", lifetime = "Persistent", rewards = challenge.rewards};
 			completionToken.clientProperties.Add("challengeid", challengeId.ToString());
@@ -188,7 +192,8 @@ namespace ProjectEarthServerAPI.Util
 							&& match.action.Contains(evt.action) 
 							&& (match.targetItems == null 
 							    || match.targetItems.itemIds.Contains(evt.eventId)
-							    || match.targetItems.tags.Contains(catalogItem.item.journalMetadata.groupKey) 
+							    || match.targetItems.tags.Contains(catalogItem.item.journalMetadata.groupKey)
+								|| match.targetItems.tags.Contains(catalogItem.category) 
 							    || match.targetItems.rarity.Contains(catalogItem.rarity))) != null)
 						.ToList();
 

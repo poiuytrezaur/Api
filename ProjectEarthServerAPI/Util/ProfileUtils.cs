@@ -2,6 +2,9 @@
 using Newtonsoft.Json;
 using ProjectEarthServerAPI.Models;
 using System.IO;
+using ProjectEarthServerAPI.Models.Features;
+using ProjectEarthServerAPI.Models.Player;
+using System;
 
 namespace ProjectEarthServerAPI.Util
 {
@@ -28,7 +31,10 @@ namespace ProjectEarthServerAPI.Util
 
 		private static void RewardLevelupRewards(string playerId, int level)
 		{
-			RewardUtils.RedeemRewards(playerId, ProfileResponse.levels[level.ToString()].rewards, EventLocation.LevelUp);
+			var rewards = ProfileResponse.levels[level.ToString()].rewards;
+			RewardUtils.RedeemRewards(playerId, rewards, EventLocation.LevelUp);
+			rewards.Levels = level;
+			JournalUtils.AddActivityLogEntry(playerId, DateTime.UtcNow, Scenario.LevelUp, rewards, ChallengeDuration.SignIn, null, null, null, null, null);
 		}
 
 		private static bool WriteProfile(string playerId, ProfileData playerProfile)

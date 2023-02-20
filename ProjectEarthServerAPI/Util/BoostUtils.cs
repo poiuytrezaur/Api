@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using Newtonsoft.Json;
 using ProjectEarthServerAPI.Models;
 using ProjectEarthServerAPI.Models.Features;
+using ProjectEarthServerAPI.Models.Player;
 
 namespace ProjectEarthServerAPI.Util
 {
@@ -58,6 +59,7 @@ namespace ProjectEarthServerAPI.Util
 
 			ActiveBoost locOfBoost = null;
 
+			JournalUtils.AddActivityLogEntry(playerId, DateTime.UtcNow, Scenario.BoostActivated, null, ChallengeDuration.Career, null, boostId.ToString(), null, null, null);
 
 			if (baseBoosts.result.scenarioBoosts.death != null)
 			{

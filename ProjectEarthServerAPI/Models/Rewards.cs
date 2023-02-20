@@ -6,6 +6,9 @@ namespace ProjectEarthServerAPI.Models
 {
 	public class Rewards
 	{
+		[JsonProperty("level", NullValueHandling = NullValueHandling.Ignore)]
+		public int? Levels { get; set; }
+
 		[JsonProperty("experiencePoints", NullValueHandling = NullValueHandling.Ignore)]
 		public int? ExperiencePoints { get; set; }
 

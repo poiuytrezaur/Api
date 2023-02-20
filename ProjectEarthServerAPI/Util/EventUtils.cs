@@ -1,5 +1,7 @@
 ﻿using System;
 using ProjectEarthServerAPI.Models;
+using ProjectEarthServerAPI.Models.Player;
+using ProjectEarthServerAPI.Models.Features;
 using Serilog;
 
 namespace ProjectEarthServerAPI.Util
@@ -14,7 +16,20 @@ namespace ProjectEarthServerAPI.Util
 					Log.Debug("[System] Item Event dispatched!");
 					Log.Debug(ev.action.ToString());
 					ChallengeUtils.ProgressChallenge(playerId, genoaEvent);
+					if (ev.action == ItemEventAction.ItemSmelted)
+						JournalUtils.AddActivityLogEntry(playerId, DateTime.UtcNow, Scenario.SmeltingJobCompleted,
+							new Rewards { Inventory = new RewardComponent[] { new RewardComponent { Id = ev.eventId, Amount = (int)ev.amount } } },
+							ChallengeDuration.Career, null, null, null, null, null);
 
+					if (ev.action == ItemEventAction.ItemCrafted)
+						JournalUtils.AddActivityLogEntry(playerId, DateTime.UtcNow, Scenario.CraftingJobCompleted,
+							new Rewards { Inventory = new RewardComponent[] { new RewardComponent { Id = ev.eventId, Amount = (int)ev.amount } } },
+							ChallengeDuration.Career, null, null, null, null, null);
+							
+					if (ev.action == ItemEventAction.ItemJournalEntryUnlocked)
+						JournalUtils.AddActivityLogEntry(playerId, DateTime.UtcNow, Scenario.JournalContentCollected,
+							new Rewards { Inventory = new RewardComponent[] { new RewardComponent { Id = ev.eventId, Amount = 0 } } },
+							ChallengeDuration.Career, null, null, null, null, null);
 					break;
 
 				case MultiplayerEvent ev:
@@ -38,6 +53,8 @@ namespace ProjectEarthServerAPI.Util
 					Log.Debug($"[System] Tappable Location: {tappable.location.tileId}");
 
 					ChallengeUtils.ProgressChallenge(playerId, genoaEvent);
+					JournalUtils.AddActivityLogEntry(playerId, DateTime.UtcNow, Scenario.TappableCollected, tappable.rewards, 
+						ChallengeDuration.Career, ActiveLocationType.Tappable, null, null, null, null);
 
 					break;
 

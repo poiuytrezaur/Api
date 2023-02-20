@@ -72,7 +72,11 @@ namespace ProjectEarthServerAPI.Util
 
                 Log.Information($"[{playerId}]: Redeemed token {tokenId}.");
 
-                return tokenToRedeem;
+				if (tokenToRedeem.clientProperties["itemid"] != null)
+					EventUtils.HandleEvents(playerId, new ItemEvent { 
+                        action = ItemEventAction.ItemJournalEntryUnlocked, eventId = Guid.Parse(tokenToRedeem.clientProperties["itemid"]) });
+
+				return tokenToRedeem;
             }
             else
             {

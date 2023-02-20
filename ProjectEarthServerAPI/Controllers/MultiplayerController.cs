@@ -139,6 +139,20 @@ namespace ProjectEarthServerAPI.Controllers
 
 		[Authorize]
 		[ApiVersion("1.1")]
+		[Route("1/api/v{version:apiVersion}/multiplayer/player/adventures/{adventureid}/instances")]
+		public async Task<IActionResult> PostCreatePlayerAdventureInstance(string adventureid)
+		{
+			string authtoken = User.FindFirstValue(ClaimTypes.NameIdentifier);
+			var stream = new StreamReader(Request.Body);
+			var body = await stream.ReadToEndAsync();
+			var parsedRequest = JsonConvert.DeserializeObject<BuildplateServerRequest>(body);
+
+			var response = await MultiplayerUtils.CreateAdventureInstance(authtoken, adventureid, parsedRequest.playerCoordinate);
+			return Content(JsonConvert.SerializeObject(response), "application/json");
+		}
+
+		[Authorize]
+		[ApiVersion("1.1")]
 		[Route("1/api/v{version:apiVersion}/multiplayer/encounters/state")]
 		public async Task<IActionResult> EncounterState()
 		{

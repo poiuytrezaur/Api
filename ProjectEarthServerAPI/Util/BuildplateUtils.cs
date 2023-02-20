@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using Newtonsoft.Json;
 using ProjectEarthServerAPI.Models.Buildplate;
+using ProjectEarthServerAPI.Models.Features;
 using ProjectEarthServerAPI.Models.Multiplayer;
 using ProjectEarthServerAPI.Models.Player;
 using Serilog;
@@ -112,7 +113,9 @@ namespace ProjectEarthServerAPI.Util
 
 			SharedBuildplateInfo buildplateInfo = new SharedBuildplateInfo() { playerId = "Unknown user", buildplateData = sharedBuildplate, inventory = inventory, sharedOn = DateTime.UtcNow};
 			SharedBuildplateResponse buildplateResponse = new SharedBuildplateResponse() { result = buildplateInfo, continuationToken = null, expiration = null, updates = new Models.Updates() };
-			
+
+			JournalUtils.AddActivityLogEntry(playerId, DateTime.UtcNow, Scenario.BuildplateShared, null, ChallengeDuration.Career, null, null, null, null, null);
+
 			WriteSharedBuildplate(buildplateResponse, sharedId);
 			
 			ShareBuildplateResponse response = new ShareBuildplateResponse() { result = "minecraftearth://sharedbuildplate?id=" + sharedId, expiration = null, continuationToken = null, updates = null};

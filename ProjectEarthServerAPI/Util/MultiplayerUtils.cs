@@ -140,7 +140,7 @@ namespace ProjectEarthServerAPI.Util
 			var serverInstanceId = await NotifyServerInstance(server.Key, buildplateId, playerId);
 
 			var buildplate = BuildplateUtils.ReadBuildplate(Guid.Parse(buildplateId));
-			var blocksPerMeter = buildplate.blocksPerMeter;
+			var blocksPerMeter = 1;
 			var buildplateOffset = buildplate.offset;
 			var instanceMetadata = new BuildplateServerResponse.InstanceMetadata { buildplateid = buildplateId };
 
@@ -154,7 +154,7 @@ namespace ProjectEarthServerAPI.Util
 				blocksPerMeter = blocksPerMeter,
 				breakableItemToItemLootMap = new BuildplateServerResponse.BreakableItemToItemLootMap(),
 				dimension = dimensions,
-				gameplayMode = GameplayMode.Buildplate,
+				gameplayMode = GameplayMode.Encounter,
 				isFullSize =
 					false, // TODO: Defines if the buildplate should be rendered, we just disable it (Actual Check: (dimensions.x >= 32 && dimensions.z >= 32))
 				offset = buildplateOffset, // Same for all buildplates
@@ -238,7 +238,7 @@ namespace ProjectEarthServerAPI.Util
 			var serverInstanceId = await NotifyServerInstance(server.Key, buildplateId, playerId);
 
 			var buildplate = BuildplateUtils.ReadSharedBuildplate(buildplateId);
-			var blocksPerMeter = buildplate.result.buildplateData.blocksPerMeter;
+			var blocksPerMeter = 1;
 			var buildplateOffset = buildplate.result.buildplateData.offset;
 			var instanceMetadata = new BuildplateServerResponse.InstanceMetadata { buildplateid = buildplateId };
 
@@ -336,7 +336,7 @@ namespace ProjectEarthServerAPI.Util
 			var serverInstanceId = await NotifyServerInstance(server.Key, buildplateId, playerId);
 
 			var buildplate = BuildplateUtils.ReadBuildplate(Guid.Parse(buildplateId));
-			var blocksPerMeter = buildplate.blocksPerMeter;
+			var blocksPerMeter = 1;
 			var buildplateOffset = buildplate.offset;
 			var instanceMetadata = new BuildplateServerResponse.InstanceMetadata { buildplateid = buildplateId };
 

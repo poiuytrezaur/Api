@@ -39,64 +39,28 @@ namespace ProjectEarthServerAPI.Util
 			}
 
 			WriteJournalForPlayer(playerId, baseJournal);
-
 			return true;
 		}
 
-		public static void AddActivityLogEntry(string playerId, BaseEvent ev)
+		public static void AddActivityLogEntry(string playerId, DateTime eventTime, Scenario scenario,
+		Rewards rewards = null, ChallengeDuration? duration = null, ActiveLocationType? gameplayMode = null,
+		string boostId = null, Guid? referenceId = null, uint? order = null, bool? isFinalSeasonChallenge = null)
 		{
 			var journal = ReadJournalForPlayer(playerId);
-
 			var activityLogEntry = new Activity
 			{
-				eventTime = DateTime.UtcNow,
-				properties = new ActivityProperties
-				{
-					duration = ChallengeDuration.Career,
-					order = (uint)journal.result.activityLog.Count,
-					referenceId = Guid.NewGuid()
-				},
-				rewards = null,
-				scenario = Scenario.CraftingJobCompleted
+				eventTime = eventTime,
+				scenario = scenario,
+				rewards = rewards,
+				properties = new ActivityProperties {
+					duration = duration,
+					gameplayMode = gameplayMode,
+					boostId = boostId,
+					referenceId = referenceId,
+					OrderUint = order,
+					isFinalSeasonChallenge = isFinalSeasonChallenge
+				}
 			};
-
-			switch (ev)
-			{
-				case ItemEvent evt:
-					activityLogEntry.rewards = new Rewards {Inventory = new RewardComponent[0]};
-					activityLogEntry.rewards.Inventory[0].Amount = (int) evt.amount;
-					activityLogEntry.rewards.Inventory[0].Id = evt.eventId;
-					switch (evt.action)
-					{
-						case ItemEventAction.ItemCrafted:
-							activityLogEntry.scenario = Scenario.CraftingJobCompleted;
-							break;
-
-						case ItemEventAction.ItemSmelted:
-							activityLogEntry.scenario = Scenario.SmeltingJobCompleted;
-							break;
-
-					}
-
-					break;
-
-				case ChallengeEvent evt:
-					activityLogEntry.rewards = ChallengeUtils.GetRewardsForChallenge(evt.eventId);
-					activityLogEntry.scenario = Scenario.ChallengeCompleted;
-					break;
-
-				case TappableEvent evt:
-					activityLogEntry.rewards = StateSingleton.Instance.activeTappables[evt.eventId].rewards;
-					activityLogEntry.scenario = Scenario.TappableCollected;
-					break;
-
-				case JournalEvent evt:
-					activityLogEntry.rewards = new Rewards();
-					activityLogEntry.scenario = Scenario.JournalContentCollected;
-					break;
-
-
-			}
 
 			journal.result.activityLog.Add(activityLogEntry);
 			WriteJournalForPlayer(playerId, journal);
