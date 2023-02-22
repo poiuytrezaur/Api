@@ -3,19 +3,21 @@
 
 ## DISCLAIMER
 The API implementation is NOT complete, which means that not all of the game features might work as expected.
+### Special thanks to [LukeFZ](https://github.com/LukeFZ) for providing all of the necessary data for recovering missing features
 
 ## What does this component do?
 The core API handles the bulk of game functionality - pretty much everything that isn't direct AR gameplay is done here.
 
-| Currently working features | Partially working features                                                                                                 |
-|----------------------------|----------------------------------------------------------------------------------------------------------------------------|
-| Map                        | Buildplates (because cloudburst implemetation is not complete)                                                             |
-| Tappables                  | Adventures/Encounters (because cloudburst implemetation is not complete)                                                   |
-| Crafting                   | Smelting (kinda works, but it is a bit broken, because its implementation is not complete or lacks some necessary details) |
-| Store                      | Buildplate sharing (right now it lacks the website part where you could launch the game in order to play it)               |
-| Inventory                  | Challenges (not all of the challenge conditions are implemented and some of them is broken)                                |
-| Boosts                     | Profile (activity log is not implemented)                                                                                  |
-| Journal                    |                                                                                                                            |
+| Currently working features               | Partially working features                            | 
+|------------------------------------------|-------------------------------------------------------|
+| Map                                      | Buildplates (Implemetation is not complete)           |
+| Tappables                                | Adventures/Encounters (Implemetation is not complete) |
+| Crafting                                 | Smelting (Implementation is not complete)             |
+| Store                                    | Buildplate sharing (Webpage is not implemented)       |
+| Inventory                                | Challenges (Challenge conditions are broken)          |
+| Boosts (Do not confuse with boost minis) |                                                       |
+| Journal                                  |                                                       |
+| Activity Log                             |                                                       |
 
 ## Building
 1. `git clone --recursive https://github.com/jackcaver/Api.git`
