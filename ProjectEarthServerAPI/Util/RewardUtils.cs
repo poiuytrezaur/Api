@@ -30,7 +30,8 @@ namespace ProjectEarthServerAPI.Util
 
 				updates.inventory = nextStreamId;
                 updates.playerJournal = nextStreamId;
-            }
+				updates.challenges = nextStreamId;
+			}
 
 			foreach (var utilityBlock in rewards.UtilityBlocks)
 			{

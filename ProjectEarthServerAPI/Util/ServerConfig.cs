@@ -23,7 +23,6 @@ namespace ProjectEarthServerAPI.Util
         public string recipesFileLocation { get; set; }
         public string settingsFileLocation { get; set; }
         public string challengeStorageFolderLocation { get; set; }
-		public Guid activeSeasonChallenge { get; set; }
         public string buildplateStorageFolderLocation { get; set; }
         public string sharedBuildplateStorageFolderLocation { get; set; }
 		public string productCatalogFileLocation { get; set; }

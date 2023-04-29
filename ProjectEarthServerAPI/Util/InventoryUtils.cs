@@ -120,6 +120,7 @@ namespace ProjectEarthServerAPI.Util
 		public static InventoryUtilResult AddItemToInv(string playerId, Guid itemIdToAdd, int count = 1, Guid? instanceId = null)
 		{
 			var catalogItem = StateSingleton.Instance.catalog.result.items.Find(match => match.id == itemIdToAdd);
+			double crystalSlotCap = StateSingleton.Instance.settings.result.crystalslotcap;
 
 			try
 			{
@@ -160,6 +161,8 @@ namespace ProjectEarthServerAPI.Util
 					if (itementry != null)
 					{
 						itementry.owned += count;
+						if (catalogItem.item.type == "AdventureScroll" && itementry.owned > crystalSlotCap)
+							itementry.owned = (int)crystalSlotCap;
 						itementry.seen.on = DateTime.UtcNow;
 					}
 					else

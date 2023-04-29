@@ -26,7 +26,7 @@ namespace ProjectEarthServerAPI.Models.Player
 			{
 				result = new ChallengesList
 				{
-					activeSeasonChallenge = StateSingleton.Instance.challengeStorage.activeSeasonChallenge,
+					activeSeasonChallenge = Guid.Empty,
 					challenges = StateSingleton.Instance.challengeStorage.challenges
 						.Where(pred => pred.Value.challengeBackendInformation.isDefaultChallenge)
 						.ToDictionary(pred => pred.Key,
@@ -51,7 +51,7 @@ namespace ProjectEarthServerAPI.Models.Player
 		{
 			ChallengeStorage storage = new();
 			storage.challenges = new();
-			storage.activeSeasonChallenge = StateSingleton.Instance.config.activeSeasonChallenge;
+			storage.activeSeasonChallenge = Guid.Empty;
 
 			foreach (string filePath in Directory.EnumerateFiles(challengesFolderLocation, "*.json"))
 			{
@@ -95,7 +95,7 @@ namespace ProjectEarthServerAPI.Models.Player
 		[JsonProperty(ItemConverterType = typeof(StringEnumConverter))]
 		public List<ItemEventAction> action { get; set; } // What the challenge is, like award/craft/smelt item
 		[JsonProperty(ItemConverterType = typeof(StringEnumConverter))]
-		public List<EventLocation>? location { get; set; } // For tappable/challenge challenges, like "Get x wood from tappables" = tappable
+		public List<EventLocation> location { get; set; } // For tappable/challenge challenges, like "Get x wood from tappables" = tappable
 		public int threshold { get; set; } // Amount of that requirement in challenge, like "Collect 2 cobblestone" = 2
 		public bool shouldBeUnique { get; set; } // If all items should only be counted once, for stuff that matches tags. TODO: Implement
 	}
@@ -118,7 +118,8 @@ namespace ProjectEarthServerAPI.Models.Player
 
 	public class ChallengeItems {
         public List<Guid> itemIds { get; set; }
-        public List<string> tags { get; set; }
+        public List<string> groupKeys { get; set; }
+		public List<string> categories { get; set; }
         [JsonProperty(ItemConverterType = typeof(StringEnumConverter))]
 		public List<Item.Rarity> rarity { get; set; }
     }

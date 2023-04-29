@@ -1,4 +1,6 @@
-﻿namespace ProjectEarthServerAPI.Models
+﻿using ProjectEarthServerAPI.Util;
+
+namespace ProjectEarthServerAPI.Models
 {
 	public class FeaturesResponse
 	{
@@ -11,7 +13,7 @@
 	public class FeaturesResult
 	{
 		public bool workshop_enabled { get; set; } = true;
-		public bool buildplates_enabled { get; set; } = true;
+		public bool buildplates_enabled { get; set; } = MultiplayerUtils.IsAvailable();
 		public bool enable_ruby_purchasing { get; set; } = false;
 		public bool commerce_enabled { get; set; } = true;
 		public bool full_logging_enabled { get; set; } = true;
@@ -25,7 +27,7 @@
 		public bool social_link_share_enabled { get; set; } = true;
 		public bool social_link_launch_enabled { get; set; } = true;
 		public bool encoded_join_enabled { get; set; } = true;
-		public bool adventure_crystals_enabled { get; set; } = true;
+		public bool adventure_crystals_enabled { get; set; } = MultiplayerUtils.IsAvailable();
 		public bool item_limits_enabled { get; set; } = true;
 		public bool adventure_crystals_ftue_enabled { get; set; } = true;
 		public bool expire_crystals_on_cleanup_enabled { get; set; } = true;

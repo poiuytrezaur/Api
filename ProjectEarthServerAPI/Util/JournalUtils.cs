@@ -31,7 +31,7 @@ namespace ProjectEarthServerAPI.Util
 					? (uint)stackableItem.owned
 					: (uint)((InventoryResponse.NonStackableItem)item).instances.Count;
 
-				if (entry.amountCollected > itemAmount) entry.amountCollected = itemAmount;
+				if (entry.amountCollected < itemAmount) entry.amountCollected = itemAmount;
 
 				entry.lastSeen = item.seen.on;
 

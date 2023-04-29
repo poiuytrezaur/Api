@@ -74,9 +74,11 @@ namespace ProjectEarthServerAPI.Util
 				challenge.duration, null, null, challengeId, (uint)challenge.order, null);
 
 			var completionToken = new Token {clientProperties = new Dictionary<string, string>(), clientType = "challenge.completed", lifetime = "Persistent", rewards = challenge.rewards};
+			var expirationTimeUTC = (playerChallenges.result.challenges[challengeId]?.endTimeUtc != null) ?
+				playerChallenges.result.challenges[challengeId]?.endTimeUtc.Value.ToString(CultureInfo.InvariantCulture) : null;
 			completionToken.clientProperties.Add("challengeid", challengeId.ToString());
 			completionToken.clientProperties.Add("category", challenge.category.GetDisplayName());
-			completionToken.clientProperties.Add("expirationtimeutc", playerChallenges.result.challenges[challengeId]?.endTimeUtc.Value.ToString(CultureInfo.InvariantCulture));
+			completionToken.clientProperties.Add("expirationtimeutc", expirationTimeUTC);
 
 			var returnUpdates = new Updates();
 
@@ -150,7 +152,9 @@ namespace ProjectEarthServerAPI.Util
 		public static void ProgressChallenge(string playerId, BaseEvent ev)
 		{
 			var playerChallenges = ReadChallenges(playerId);
-			var challengeIdList = playerChallenges.result.challenges.Keys.ToList();
+			var challengeIdList = playerChallenges.result.challenges
+				.Where(match => match.Value.duration != ChallengeDuration.Season || match.Key == playerChallenges.result.activeSeasonChallenge)
+				.ToDictionary(x => x.Key, x => x.Value).Keys.ToList();
 			List<ChallengeBackend> challengeRequirements = new();
 			foreach (Guid id in challengeIdList)
 			{
@@ -176,7 +180,7 @@ namespace ProjectEarthServerAPI.Util
 					challengesToProgress = challengesToProgress
 						.Where(pred => pred.challengeRequirements.tappables?
 							.Find(pred => 
-								pred.targetTappableTypes == null
+								pred.targetTappableTypes == null || pred.targetTappableTypes.Count == 0
 								|| pred.targetTappableTypes.Contains(tappable.location.icon)) != null)
 						.ToList();
 
@@ -185,16 +189,22 @@ namespace ProjectEarthServerAPI.Util
 				case ItemEvent evt:
 					var catalogItem =
 						StateSingleton.Instance.catalog.result.items.Find(match => match.id == evt.eventId);
+					EventLocation location = evt.location;
 
 					challengesToProgress = challengesToProgress.Where(pred =>
 						pred.challengeRequirements.items?.Find(match =>
-							(match.location == null || match.location.Contains(evt.location))
+							(match.location.Count == 0 || match.location.Contains(location))
 							&& match.action.Contains(evt.action) 
-							&& (match.targetItems == null 
-							    || match.targetItems.itemIds.Contains(evt.eventId)
-							    || match.targetItems.tags.Contains(catalogItem.item.journalMetadata.groupKey)
-								|| match.targetItems.tags.Contains(catalogItem.category) 
-							    || match.targetItems.rarity.Contains(catalogItem.rarity))) != null)
+							&& (match.targetItems == null || 
+								((match.targetItems.itemIds == null || match.targetItems.itemIds.Count == 0 
+									|| match.targetItems.itemIds.Contains(evt.eventId))
+							    && (match.targetItems.groupKeys == null || match.targetItems.groupKeys.Count == 0 
+									|| match.targetItems.groupKeys.Contains(catalogItem.item.journalMetadata?.groupKey))
+								&& (match.targetItems.categories == null || match.targetItems.categories.Count == 0 
+									|| match.targetItems.categories.Contains(catalogItem.category))
+							    && (match.targetItems.rarity == null || match.targetItems.rarity.Count == 0 
+									|| match.targetItems.rarity.Contains(catalogItem.rarity)))
+								)) != null)
 						.ToList();
 
 					break;
@@ -205,9 +215,10 @@ namespace ProjectEarthServerAPI.Util
 					challengesToProgress = challengesToProgress.Where(pred =>
 						pred.challengeRequirements.challenges?
 							.Find(pred => 
-								(pred.targetChallengeIds == null || pred.targetChallengeIds.Contains(evt.eventId)) 
-								&& (pred.durations == null || pred.durations.Contains(challenge.duration)) 
-								&& (pred.rarities == null || pred.rarities.Contains(challenge.rarity))) != null)
+								(pred.targetChallengeIds == null || pred.targetChallengeIds.Count == 0 
+									|| pred.targetChallengeIds.Contains(evt.eventId)) 
+								&& (pred.durations == null || pred.durations.Count == 0 || pred.durations.Contains(challenge.duration)) 
+								&& (pred.rarities == null || pred.rarities.Count == 0 || pred.rarities.Contains(challenge.rarity))) != null)
 						.ToList();
 
 					break;
@@ -251,8 +262,13 @@ namespace ProjectEarthServerAPI.Util
 				Log.Debug($"[{playerId}] Progressing challenge {id}.");
 
 				var info = challenge.challengeInfo;
-				if (ev.GetType() == typeof(ItemEvent)) info.currentCount += (int) ((ItemEvent)ev).amount;
-				info.currentCount++;
+				if (ev.GetType() == typeof(ItemEvent) && ((ItemEvent)ev).action != ItemEventAction.ItemJournalEntryUnlocked)
+				{
+					info.currentCount += (int)((ItemEvent)ev).amount;
+				}
+				else info.currentCount++;
+				if (info.currentCount > info.totalThreshold)
+					info.currentCount = info.totalThreshold;
 				info.percentComplete = (info.currentCount / info.totalThreshold) * 100;
 
 				if (info.currentCount >= info.totalThreshold) challengesToRedeem.Add(id);
@@ -264,7 +280,6 @@ namespace ProjectEarthServerAPI.Util
 
 			foreach (Guid id in challengesToRedeem) 
 				RedeemChallengeForPlayer(playerId, id);
-
 		}
 
         public static ChallengesResponse ReloadChallenges(string playerId)

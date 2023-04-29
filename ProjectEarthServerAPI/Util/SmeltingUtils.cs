@@ -41,18 +41,18 @@ namespace ProjectEarthServerAPI.Util
 				}
 				var burnInfo = catalog.result.items.Find(match => match.id == request.FuelIngredient.itemId).burnRate;
 				fuelInfo = new FuelInfo {burnRate = new BurnInfo {burnTime = burnInfo.burnTime * request.FuelIngredient.quantity, heatPerSecond = burnInfo.heatPerSecond}, itemId = request.FuelIngredient.itemId, itemInstanceIds = request.FuelIngredient.itemInstanceIds, quantity = request.FuelIngredient.quantity};
-				if (SmeltingJobs[playerId][slot].burning != null) {
+				/*if (SmeltingJobs[playerId][slot].burning != null) {
 					burning = SmeltingJobs[playerId][slot].burning;
-				} else {
-					burning = new BurningItems
-					{
-						burnStartTime = currentDateTime,
-						burnsUntil = currentDateTime.AddSeconds(fuelInfo.burnRate.burnTime),
-						fuel = fuelInfo,
-						heatDepleted = 0,
-						remainingBurnTime = new TimeSpan(0, 0, fuelInfo.burnRate.burnTime)
-					};
-				}
+				} else {*/
+				burning = new BurningItems
+				{
+					burnStartTime = currentDateTime,
+					burnsUntil = currentDateTime.AddSeconds(fuelInfo.burnRate.burnTime),
+					fuel = fuelInfo,
+					heatDepleted = 0,
+					remainingBurnTime = new TimeSpan(0, 0, fuelInfo.burnRate.burnTime)
+				};
+				//}
 				var nextStreamId = GenericUtils.GetNextStreamVersion();
 
 				SmeltingSlotInfo job = new SmeltingSlotInfo

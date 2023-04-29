@@ -33,7 +33,8 @@ namespace ProjectEarthServerAPI.Util
 		private static Random random = new Random();
 
 		// For json deserialization
-		public class PossibleItemCount {
+		public class ItemDrop {
+			public float chance { get; set; }
 			public int min { get; set; }
 			public int max { get; set; }
 		}
@@ -42,9 +43,7 @@ namespace ProjectEarthServerAPI.Util
 			public string tappableID { get; set; }
 			[JsonConverter(typeof(StringEnumConverter))]
 		    public Item.Rarity rarity { get; set; }
-			public int? experiencePoints { get; set; }
-			public List<List<Guid>> possibleDropSets { get; set; }
-			public Dictionary<Guid, PossibleItemCount> possibleItemCount { get; set; }
+			public Dictionary<Guid, ItemDrop> dropTable { get; set; }
 		}
 
 		public static Dictionary<string, TappableLootTable> loadAllTappableSets()
@@ -56,7 +55,7 @@ namespace ProjectEarthServerAPI.Util
 			{
 				TappableLootTable table = JsonConvert.DeserializeObject<TappableLootTable>(File.ReadAllText(file));
 				tappableData.Add(table.tappableID, table);
-				Log.Information($"Loaded {table.possibleDropSets.Count} drop sets for tappable ID {table.tappableID} | Path: {file}");
+				Log.Information($"Loaded {table.dropTable.Count} drops for tappable ID {table.tappableID} | Path: {file}");
 			}
 
 			return tappableData;
@@ -154,43 +153,78 @@ namespace ProjectEarthServerAPI.Util
 			return response;
 		}
 
+		private static Guid GetRandomItemForTappable(string type) 
+		{
+			Dictionary<Guid, ItemDrop> DropTable = StateSingleton.Instance.tappableData[type].dropTable;
+			float totalPercentage = (int)DropTable.Sum(item => item.Value.chance);
+			float diceRoll = random.Next(0, (int)(totalPercentage*10))/10;
+			foreach (Guid item in DropTable.Keys)
+			{
+				if (diceRoll >= DropTable[item].chance && (random.Next(0, 4) >= 3))
+					return item;
+				diceRoll -= DropTable[item].chance;
+			}
+			return Guid.Empty;
+		}
+
 		public static Rewards GenerateRewardsForTappable(string type)
 		{
-			List<List<Guid>> availableDropSets;
-			Dictionary<Guid, PossibleItemCount> availableItemCounts;
-			int? experiencePoints;
+			var catalog = StateSingleton.Instance.catalog;
+			Dictionary<Guid, ItemDrop> DropTable;
+			var targetDropSet = new Dictionary<Guid, int> { };
+			int experiencePoints = 0;
 
 			try
 			{
-				availableDropSets = StateSingleton.Instance.tappableData[type].possibleDropSets;
-				availableItemCounts = StateSingleton.Instance.tappableData[type].possibleItemCount;
-				experiencePoints = StateSingleton.Instance.tappableData[type].experiencePoints;
+				DropTable = StateSingleton.Instance.tappableData[type].dropTable;
 			}
 			catch (Exception e)
 			{
 				Log.Error("[Tappables] no json file for tappable type " + type + " exists in data/tappables. Using backup of dirt (f0617d6a-c35a-5177-fcf2-95f67d79196d)");
-				availableDropSets = new List<List<Guid>>
-				{
-					new() {Guid.Parse("f0617d6a-c35a-5177-fcf2-95f67d79196d")}
+				Guid dirtId = Guid.Parse("f0617d6a-c35a-5177-fcf2-95f67d79196d");
+				var dirtReward = new Rewards { 
+					Inventory = new RewardComponent[1] { new RewardComponent { Id = dirtId, Amount = 1 } }, 
+					ExperiencePoints = catalog.result.items.Find(match => match.id == dirtId).experiencePoints.tappable, 
+					Rubies = (random.Next(0, 4) >= 3) ? 1 : 0,
 				};
-				availableItemCounts = new Dictionary<Guid, PossibleItemCount> {	{ Guid.Parse("f0617d6a-c35a-5177-fcf2-95f67d79196d"), new PossibleItemCount() { min = 1, max = 3 } } };
-				experiencePoints = 1;
+
+				return dirtReward;
 				//dirt for you... sorry :/
 			}
 
-			var targetDropSet = availableDropSets[random.Next(0, availableDropSets.Count)];
-			if (targetDropSet == null)
+			for (int i = 0; i < 3; i++)
 			{
-				Log.Error($"[Tappables] targetDropSet is null! Available drop set count was {availableDropSets.Count}");
+				Guid item = GetRandomItemForTappable(type);
+				if (!targetDropSet.Keys.Contains(item) && item != Guid.Empty)
+				{
+					int amount = random.Next(DropTable[item].min, DropTable[item].max);
+					targetDropSet.Add(item, amount);
+					experiencePoints += catalog.result.items.Find(match => match.id == item).experiencePoints.tappable * amount;
+				}
+			}
+
+			if (targetDropSet.Count == 0)
+			{
+				Guid item = DropTable.Aggregate((x, y) => x.Value.chance > y.Value.chance ? x : y).Key;
+				int amount = random.Next(DropTable[item].min, DropTable[item].max);
+				targetDropSet.Add(item, amount);
+				experiencePoints += catalog.result.items.Find(match => match.id == item).experiencePoints.tappable * amount;
 			}
 
 			var itemRewards = new RewardComponent[targetDropSet.Count];
 			for (int i = 0; i < targetDropSet.Count; i++)
 			{
-				itemRewards[i] = new RewardComponent() { Amount = random.Next(availableItemCounts[targetDropSet[i]].min, availableItemCounts[targetDropSet[i]].max), Id = targetDropSet[i] };
+				itemRewards[i] = new RewardComponent() { 
+					Amount = targetDropSet[targetDropSet.Keys.ToList()[i]], 
+					Id = targetDropSet.Keys.ToList()[i] 
+				};
 			}
 
-			var rewards = new Rewards { Inventory = itemRewards, ExperiencePoints = experiencePoints, Rubies = 1 }; 
+			var rewards = new Rewards { 
+				Inventory = itemRewards, 
+				ExperiencePoints = experiencePoints, 
+				Rubies = (random.Next(0, 4) >= 3) ? 1 : 0 
+			}; 
 
 			return rewards;
 		}

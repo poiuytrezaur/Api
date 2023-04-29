@@ -26,10 +26,10 @@ namespace ProjectEarthServerAPI.Util
 							new Rewards { Inventory = new RewardComponent[] { new RewardComponent { Id = ev.eventId, Amount = (int)ev.amount } } },
 							ChallengeDuration.Career, null, null, null, null, null);
 							
-					if (ev.action == ItemEventAction.ItemJournalEntryUnlocked)
+					/*if (ev.action == ItemEventAction.ItemJournalEntryUnlocked)
 						JournalUtils.AddActivityLogEntry(playerId, DateTime.UtcNow, Scenario.JournalContentCollected,
 							new Rewards { Inventory = new RewardComponent[] { new RewardComponent { Id = ev.eventId, Amount = 0 } } },
-							ChallengeDuration.Career, null, null, null, null, null);
+							ChallengeDuration.Career, null, null, null, null, null);*/
 					break;
 
 				case MultiplayerEvent ev:

@@ -742,5 +742,10 @@ namespace ProjectEarthServerAPI.Util
 			var expectedResult = Convert.ToHexString(crypto.ComputeHash(Encoding.UTF8.GetBytes(challenge)));
 			return expectedResult == challengeResponse;
 		}
+
+		public static bool IsAvailable()
+		{
+			return ServerSocketList.Count != 0;
+		}
 	}
 }

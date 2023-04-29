@@ -4,6 +4,8 @@ using System.IO;
 using System.Linq;
 using Newtonsoft.Json;
 using ProjectEarthServerAPI.Models;
+using ProjectEarthServerAPI.Models.Features;
+using ProjectEarthServerAPI.Models.Player;
 using Serilog;
 using Uma.Uuid;
 
@@ -41,7 +43,12 @@ namespace ProjectEarthServerAPI.Util
             AddToken(playerId, itemtoken);
 
             Log.Information($"[{playerId}]: Added item token {itemId}!");
-        }
+			EventUtils.HandleEvents(playerId, new ItemEvent
+			{
+				action = ItemEventAction.ItemJournalEntryUnlocked,
+				eventId = itemId
+			});
+		}
 
         public static bool AddToken(string playerId, Token tokenToAdd)
         {
@@ -72,9 +79,19 @@ namespace ProjectEarthServerAPI.Util
 
                 Log.Information($"[{playerId}]: Redeemed token {tokenId}.");
 
-				if (tokenToRedeem.clientProperties["itemid"] != null)
-					EventUtils.HandleEvents(playerId, new ItemEvent { 
-                        action = ItemEventAction.ItemJournalEntryUnlocked, eventId = Guid.Parse(tokenToRedeem.clientProperties["itemid"]) });
+				if (tokenToRedeem.clientProperties != null)
+				{
+					string itemId;
+					if (tokenToRedeem.clientProperties.TryGetValue("itemid", out itemId))
+						JournalUtils.AddActivityLogEntry(playerId, DateTime.UtcNow, Scenario.JournalContentCollected,
+							new Rewards { Inventory = new RewardComponent[] { new RewardComponent { Id = Guid.Parse(itemId), Amount = 0 } } },
+							ChallengeDuration.Career, null, null, null, null, null);
+					/*EventUtils.HandleEvents(playerId, new ItemEvent
+					{
+						action = ItemEventAction.ItemJournalEntryUnlocked,
+						eventId = Guid.Parse(itemId)
+					});*/
+				}
 
 				return tokenToRedeem;
             }
